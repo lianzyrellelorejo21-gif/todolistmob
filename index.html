@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <meta name="theme-color" content="#4f46e5"/>
+  
+  <title>Ultimate Task Manager</title>
+  
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+
+  <style>
+    :root {
+      /* LIGHT MODE VARIABLES */
+      --primary-color: #4f46e5;
+      --bg-color: #f3f4f6;
+      --card-bg: #ffffff;
+      --text-main: #1f2937;
+      --text-muted: #6b7280;
+      --border-color: #e5e7eb;
+      --input-bg: #f8f9fa;
+      --dropdown-hover: #f9fafb;
+    }
+
+    /* DARK MODE VARIABLES */
+    [data-theme="dark"] {
+      --primary-color: #6366f1; 
+      --bg-color: #111827;       
+      --card-bg: #1f2937;       
+      --text-main: #f3f4f6;     
+      --text-muted: #9ca3af;    
+      --border-color: #374151;  
+      --input-bg: #374151;      
+      --dropdown-hover: #374151;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      min-height: 100vh;
+      padding-top: 10px;
+      padding-bottom: 80px; /* Extra padding for FAB */
+      transition: background-color 0.3s, color 0.3s;
+    }
+
+    .container-custom {
+      max-width: 600px; /* Narrower max-width for mobile app feel */
+      width: 100%;
+      margin: 0 auto;
+      padding: 0 15px;
+    }
+
+    /* --- DASHBOARD HEADER --- */
+    .dashboard-header {
+      background: var(--card-bg);
+      border-radius: 16px;
+      padding: 1rem 1.5rem;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.05);
+      border: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      transition: background-color 0.3s, border-color 0.3s;
+    }
+
+    /* --- FAB (Floating Action Button) --- */
+    .fab-btn {
+        position: fixed;
+        bottom: 25px;
+        right: 25px;
+        width: 60px;
+        height: 60px;
+        background-color: var(--primary-color);
+        color: white;
+        border-radius: 50%;
+        border: none;
+        box-shadow: 0 4px 15px rgba(79, 70, 229, 0.4);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 28px;
+        z-index: 1000;
+        transition: transform 0.2s;
+    }
+    .fab-btn:active { transform: scale(0.95); }
+
+    /* --- MODAL CUSTOMIZATION --- */
+    .modal-content {
+        background-color: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 20px;
+    }
+    .modal-header { border-bottom: 1px solid var(--border-color); }
+    .modal-footer { border-top: 1px solid var(--border-color); }
+    .modal-title { color: var(--text-main); font-weight: 700; }
+    .btn-close { filter: invert(0.5); } 
+    [data-theme="dark"] .btn-close { filter: invert(1); }
+
+    /* DARK MODE OVERRIDES */
+    [data-theme="dark"] .text-dark { color: #f3f4f6 !important; }
+    [data-theme="dark"] .text-secondary { color: #9ca3af !important; }
+    [data-theme="dark"] .bg-white { background-color: var(--card-bg) !important; }
+
+    .app-card {
+      border: none;
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+      border-radius: 16px;
+      background: var(--card-bg);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: background-color 0.3s;
+    }
+
+    .card-body-custom { padding: 1.5rem; }
+
+    .ph-time-badge {
+      background-color: #eef2ff;
+      color: #4338ca;
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 0.4rem 0.8rem;
+      border-radius: 50rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      border: 1px solid #c7d2fe;
+    }
+    [data-theme="dark"] .ph-time-badge {
+      background-color: #312e81;
+      color: #e0e7ff;
+      border-color: #4338ca;
+    }
+
+    /* INPUTS */
+    .form-control, .form-select {
+      background-color: var(--input-bg) !important;
+      border-color: var(--border-color);
+      color: var(--text-main) !important; 
+    }
+    .form-control:focus, .form-select:focus {
+      background-color: var(--input-bg);
+      color: var(--text-main);
+      border-color: var(--primary-color);
+      box-shadow: none;
+      border-width: 2px;
+    }
+    [data-theme="dark"] ::placeholder { color: #9ca3af; opacity: 1; }
+    [data-theme="dark"] .input-group-text {
+        background-color: var(--input-bg) !important;
+        border-color: var(--border-color);
+        color: var(--text-muted);
+    }
+    [data-theme="dark"] input[type="date"] { color-scheme: dark; }
+
+    /* Task Items */
+    .task-item {
+      padding: 16px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: background-color 0.2s;
+      background-color: var(--card-bg);
+      border-radius: 12px;
+      margin-bottom: 8px;
+    }
+    .task-item:hover { background-color: var(--dropdown-hover); }
+    
+    .task-content { flex: 1; padding-left: 12px; }
+    .task-text { font-weight: 500; color: var(--text-main); font-size: 1rem; }
+    .task-date { font-size: 0.75rem; color: var(--text-muted); display: block; margin-top: 4px;}
+
+    .priority-badge {
+      font-size: 0.65rem;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: 700;
+      text-transform: uppercase;
+      margin-left: 6px;
+    }
+    .bg-p-high { background-color: #fee2e2; color: #ef4444; }
+    .bg-p-medium { background-color: #fef3c7; color: #d97706; }
+    .bg-p-low { background-color: #dbeafe; color: #2563eb; }
+    
+    [data-theme="dark"] .bg-p-high { background-color: #7f1d1d; color: #fca5a5; }
+    [data-theme="dark"] .bg-p-medium { background-color: #78350f; color: #fcd34d; }
+    [data-theme="dark"] .bg-p-low { background-color: #1e3a8a; color: #93c5fd; }
+
+    .task-completed .task-text { text-decoration: line-through; color: var(--text-muted); }
+    .task-completed { opacity: 0.7; background-color: var(--bg-color); }
+    
+    /* Progress Bar */
+    .progress-wrapper {
+        width: 100%;
+    }
+
+    .header-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+    }
+
+    .is-invalid { animation: shake 0.3s; border-color: #dc3545 !important; }
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25%, 75% { transform: translateX(-5px); }
+      50% { transform: translateX(5px); }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container-custom"> 
+    
+    <div class="dashboard-header">
+       <div class="header-top">
+         <div class="d-flex align-items-center gap-3">
+           <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+             <i class="bi bi-check-lg fs-5"></i>
+           </div>
+           <div>
+             <h5 class="fw-bold m-0 text-dark">Task Master</h5>
+             <div class="d-flex align-items-center gap-2">
+                 <div class="ph-time-badge mt-1">
+                    <span id="phClock">Loading...</span>
+                 </div>
+             </div>
+           </div>
+         </div>
+
+         <div class="d-flex gap-2">
+             <button onclick="requestNotificationPermission()" class="btn btn-sm btn-outline-primary rounded-circle" id="notifBtn" style="width: 32px; height: 32px; padding: 0;">
+                <i class="bi bi-bell-fill"></i>
+             </button>
+             <button onclick="toggleDarkMode()" class="btn btn-sm btn-outline-secondary rounded-circle" id="themeBtn" style="width: 32px; height: 32px; padding: 0;">
+                <i class="bi bi-moon-fill" id="themeIcon"></i>
+             </button>
+         </div>
+       </div>
+
+       <div class="progress-wrapper">
+          <div class="d-flex justify-content-between mb-1">
+             <small class="fw-bold text-secondary">Progress</small>
+             <small class="fw-bold text-primary" id="progressText">0%</small>
+          </div>
+          <div class="progress" style="height: 6px; border-radius: 10px; background-color: var(--input-bg);">
+              <div id="progressBar" class="progress-bar bg-primary" role="progressbar" style="width: 0%"></div>
+          </div>
+       </div>
+    </div>
+
+    <div class="app-card mb-3">
+        <div class="card-body-custom pt-3 pb-3">
+             <div class="input-group">
+               <span class="input-group-text border-end-0 ps-3 bg-transparent"><i class="bi bi-search text-muted"></i></span>
+               <input type="text" id="searchInput" class="form-control border-start-0 py-2 shadow-none" placeholder="Search tasks..." onkeyup="renderTasks()">
+             </div>
+        </div>
+    </div>
+
+    <div id="taskListContent"></div>
+    
+    <div id="emptyState" class="text-center py-5" style="display: none;">
+        <i class="bi bi-clipboard-x display-1 text-muted opacity-25"></i>
+        <p class="text-muted mt-3">No tasks found. Tap + to add one!</p>
+    </div>
+
+    <div class="text-center mt-4 mb-5 opacity-50">
+        <button onclick="downloadTasks()" class="btn btn-sm text-secondary" title="Backup"><i class="bi bi-download"></i> Backup</button>
+        <button onclick="document.getElementById('importFile').click()" class="btn btn-sm text-secondary" title="Restore"><i class="bi bi-upload"></i> Restore</button>
+        <button onclick="clearAllData()" class="btn btn-sm text-secondary" title="Reset"><i class="bi bi-trash"></i> Reset</button>
+        <input type="file" id="importFile" style="display: none;" onchange="importTasks(this)">
+    </div>
+
+  </div>
+
+  <button class="fab-btn" onclick="openAddTaskModal()">
+    <i class="bi bi-plus-lg"></i>
+  </button>
+
+  <div class="modal fade" id="taskModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="modalTitle">Add New Task</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+            <div class="mb-3">
+               <label class="small text-muted fw-bold mb-1">Task Description</label>
+               <input type="text" id="taskInput" class="form-control form-control-lg" placeholder="What needs to be done?">
+            </div>
+            
+            <div class="row g-2">
+                <div class="col-6">
+                    <label class="small text-muted fw-bold mb-1">Due Date</label>
+                    <input type="date" id="dateInput" class="form-control">
+                </div>
+                <div class="col-6">
+                    <label class="small text-muted fw-bold mb-1">Priority</label>
+                    <select id="priorityInput" class="form-select">
+                      <option value="low">Low</option>
+                      <option value="medium">Medium</option>
+                      <option value="high">High</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer border-0 pt-0">
+          <button type="button" class="btn btn-primary w-100 fw-bold py-2 rounded-3" id="addBtn">Save Task</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+    // --- 1. SAFE STARTUP ---
+    // We wrap everything in a listener to make sure HTML is ready before JS runs
+    document.addEventListener('DOMContentLoaded', function() {
+        
+        // Setup Modal
+        try {
+            window.taskModal = new bootstrap.Modal(document.getElementById('taskModal'));
+        } catch (e) { console.log("Modal Error: " + e); }
+
+        // Setup Button Listeners (Better for iPhone than onclick="")
+        const addBtn = document.getElementById('addBtn');
+        if (addBtn) {
+            addBtn.addEventListener('click', function(e) {
+                e.preventDefault(); // Stop any weird default clicking behavior
+                addOrUpdateTask();
+            });
+        }
+        
+        // Initial Render
+        renderTasks();
+        updateStats();
+        updateClock();
+    });
+
+    // --- 2. THE CORE LOGIC (With Error Catching) ---
+    function addOrUpdateTask() {
+      try {
+          const textInput = document.getElementById('taskInput');
+          const dateInput = document.getElementById('dateInput');
+          const priorityInput = document.getElementById('priorityInput');
+
+          // Force the keyboard to close on iPhone so it doesn't block the view
+          if (document.activeElement) {
+             document.activeElement.blur();
+          }
+
+          const text = textInput.value.trim();
+          let date = dateInput.value;
+
+          // VALIDATION
+          if (!text) { 
+              alert("⚠️ Please type a task name first!"); 
+              textInput.focus();
+              return; 
+          }
+          
+          // Auto-fill date if empty
+          if (!date) {
+              const now = new Date();
+              // Format YYYY-MM-DD manually to be safe on all iOS versions
+              const year = now.getFullYear();
+              const month = String(now.getMonth() + 1).padStart(2, '0');
+              const day = String(now.getDate()).padStart(2, '0');
+              date = `${year}-${month}-${day}`;
+          }
+
+          // ADD or UPDATE
+          if (editModeId) {
+            const taskIndex = tasks.findIndex(t => t.id === editModeId);
+            if (taskIndex > -1) {
+              tasks[taskIndex].text = text;
+              tasks[taskIndex].date = date;
+              tasks[taskIndex].priority = priorityInput.value;
+            }
+            editModeId = null;
+          } else {
+            const newTask = {
+              id: Date.now(),
+              text: text,
+              date: date,
+              priority: priorityInput.value,
+              completed: false,
+              createdAt: Date.now()
+            };
+            
+            // Safety Check: Ensure tasks is actually an array
+            if (!Array.isArray(tasks)) tasks = [];
+            tasks.push(newTask);
+            
+            // Try to notify, but don't crash if it fails
+            try { checkDueTasks(); } catch(err) { console.log("Notif error ignored"); }
+          }
+          
+          saveTasks();
+          window.taskModal.hide(); // Close modal
+
+      } catch (error) {
+          // THIS IS THE FIX: If there is a bug, your phone will tell you now.
+          alert("System Error: " + error.message);
+      }
+    }
+
+    // --- 3. HELPER FUNCTIONS ---
+    
+    // Global Tasks Variable
+    let tasks = [];
+    try {
+        const stored = localStorage.getItem('myTasks');
+        tasks = stored ? JSON.parse(stored) : [];
+        if (!Array.isArray(tasks)) tasks = []; // Reset if corrupted
+    } catch (e) {
+        tasks = [];
+    }
+    
+    let editModeId = null; 
+
+    function openAddTaskModal() {
+        // Reset Logic
+        editModeId = null;
+        document.getElementById('taskInput').value = '';
+        document.getElementById('priorityInput').value = 'low';
+        
+        // Auto-set Date to Today
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        document.getElementById('dateInput').value = `${year}-${month}-${day}`;
+
+        // Update UI Text
+        document.getElementById('modalTitle').innerText = "Add New Task";
+        document.getElementById('addBtn').innerText = "Save Task";
+        document.getElementById('addBtn').classList.remove('btn-warning');
+        document.getElementById('addBtn').classList.add('btn-primary');
+        
+        window.taskModal.show();
+        
+        // Delay focus slightly for iOS keyboard
+        setTimeout(() => document.getElementById('taskInput').focus(), 500);
+    }
+
+    function editTask(id) {
+      const task = tasks.find(t => t.id === id);
+      if (!task) return;
+
+      document.getElementById('taskInput').value = task.text;
+      document.getElementById('dateInput').value = task.date;
+      document.getElementById('priorityInput').value = task.priority;
+      
+      document.getElementById('modalTitle').innerText = "Edit Task";
+      const btn = document.getElementById('addBtn');
+      btn.innerText = 'Update Task';
+      btn.classList.remove('btn-primary');
+      btn.classList.add('btn-warning');
+
+      editModeId = id;
+      window.taskModal.show();
+    }
+
+    function deleteTask(id) {
+      if(confirm('Delete this task?')) {
+        tasks = tasks.filter(t => t.id !== id);
+        saveTasks();
+      }
+    }
+
+    function toggleComplete(id) {
+      const task = tasks.find(t => t.id === id);
+      if (task) {
+        task.completed = !task.completed;
+        saveTasks();
+      }
+    }
+
+    function saveTasks() {
+      localStorage.setItem('myTasks', JSON.stringify(tasks));
+      renderTasks();
+      updateStats();
+    }
+
+    function renderTasks() {
+      const listContent = document.getElementById('taskListContent');
+      const searchQuery = document.getElementById('searchInput') ? document.getElementById('searchInput').value.toLowerCase() : '';
+      
+      if (!listContent) return;
+
+      listContent.innerHTML = '';
+
+      let filteredTasks = tasks;
+      if (searchQuery) {
+        filteredTasks = tasks.filter(t => t.text.toLowerCase().includes(searchQuery));
+      }
+
+      filteredTasks.sort((a, b) => {
+          if (a.completed !== b.completed) return a.completed ? 1 : -1; 
+          return new Date(a.date) - new Date(b.date);
+      });
+
+      if (filteredTasks.length === 0) {
+        const emptyState = document.getElementById('emptyState');
+        if (emptyState) emptyState.style.display = 'block';
+      } else {
+        const emptyState = document.getElementById('emptyState');
+        if (emptyState) emptyState.style.display = 'none';
+        
+        filteredTasks.forEach(task => {
+          // Safer Date Formatting
+          let dateDisplay = '--/--';
+          if (task.date) {
+             try {
+                 const parts = task.date.split('-');
+                 if (parts.length === 3) dateDisplay = `${parts[1]}/${parts[2]}`;
+             } catch(e) {}
+          }
+
+          const priorityClass = `bg-p-${task.priority}`;
+          
+          const html = `
+            <div class="task-item ${task.completed ? 'task-completed' : ''}">
+                <div class="d-flex align-items-center" style="flex: 1" onclick="toggleComplete(${task.id})">
+                    <input class="form-check-input shadow-none m-0 me-3" type="checkbox" 
+                        ${task.completed ? 'checked' : ''} 
+                        style="width: 1.5em; height: 1.5em; border-radius: 50%; pointer-events: none;">
+                    
+                    <div class="task-content">
+                        <div class="task-text">${task.text} <span class="priority-badge ${priorityClass}">${task.priority}</span></div>
+                        <span class="task-date"><i class="bi bi-calendar-event me-1"></i> ${dateDisplay}</span>
+                    </div>
+                </div>
+
+                <div class="d-flex gap-3 ps-2">
+                     <i class="bi bi-pencil-square text-secondary fs-4 p-2" onclick="event.stopPropagation(); editTask(${task.id})" style="cursor: pointer;"></i>
+                     <i class="bi bi-trash-fill text-danger fs-4 p-2" onclick="event.stopPropagation(); deleteTask(${task.id})" style="cursor: pointer;"></i>
+                </div>
+            </div>
+          `;
+          listContent.innerHTML += html;
+        });
+      }
+    }
+
+    function updateStats() {
+      const total = tasks.length;
+      const completed = tasks.filter(t => t.completed).length;
+      const percent = total === 0 ? 0 : Math.round((completed / total) * 100);
+      
+      const bar = document.getElementById('progressBar');
+      const text = document.getElementById('progressText');
+      if (bar) bar.style.width = `${percent}%`;
+      if (text) text.innerText = `${percent}%`;
+    }
+    
+    // --- 4. EXTRAS (Clock, Theme, Notifs) ---
+    function updateClock() {
+      const clock = document.getElementById('phClock');
+      if (clock) {
+          const options = { timeZone: 'Asia/Manila', hour: '2-digit', minute: '2-digit', hour12: true };
+          clock.innerText = new Intl.DateTimeFormat('en-US', options).format(new Date());
+      }
+    }
+    setInterval(updateClock, 1000);
+
+    function toggleDarkMode() {
+        const body = document.body;
+        const icon = document.getElementById('themeIcon');
+        const isDark = body.getAttribute('data-theme') === 'dark';
+        if (isDark) {
+            body.removeAttribute('data-theme');
+            if(icon) icon.classList.replace('bi-sun-fill', 'bi-moon-fill');
+            localStorage.setItem('theme', 'light');
+        } else {
+            body.setAttribute('data-theme', 'dark');
+            if(icon) icon.classList.replace('bi-moon-fill', 'bi-sun-fill');
+            localStorage.setItem('theme', 'dark');
+        }
+    }
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'dark') {
+        document.body.setAttribute('data-theme', 'dark');
+        const icon = document.getElementById('themeIcon');
+        if(icon) icon.classList.replace('bi-moon-fill', 'bi-sun-fill');
+    }
+
+    function checkDueTasks() {
+      if (!("Notification" in window)) return;
+      if (Notification.permission !== "granted") return;
+      
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      const today = `${year}-${month}-${day}`;
+
+      tasks.forEach(task => {
+        if (!task.completed && task.date === today && !task.hasNotified) {
+          try {
+              new Notification("Task Due Today!", { body: task.text });
+              task.hasNotified = true;
+          } catch(e) {}
+        }
+      });
+    }
+
+    function requestNotificationPermission() {
+        if ("Notification" in window) {
+            Notification.requestPermission().then(permission => {
+                if (permission === "granted") {
+                    const btn = document.getElementById('notifBtn');
+                    if (btn) btn.classList.add('btn-success');
+                }
+            });
+        } else {
+            alert("Notifications not supported on this browser.");
+        }
+    }
+
+    // Data Management
+    function downloadTasks() {
+      const dataStr = JSON.stringify(tasks, null, 2); 
+      const blob = new Blob([dataStr], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `tasks_backup.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+
+    function importTasks(input) {
+      const file = input.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const importedTasks = JSON.parse(e.target.result);
+          if (Array.isArray(importedTasks)) {
+             if(confirm(`Restore ${importedTasks.length} tasks?`)) {
+               tasks = importedTasks;
+               saveTasks();
+             }
+          }
+        } catch (err) { alert('Invalid file'); }
+        input.value = '';
+      };
+      reader.readAsText(file);
+    }
+
+    function clearAllData() {
+      if(confirm("Delete ALL tasks?")) {
+        localStorage.removeItem('myTasks');
+        tasks = [];
+        renderTasks();
+        updateStats();
+      }
+    }
+  </script>
+</body>
+</html>
